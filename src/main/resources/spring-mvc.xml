@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+
+
+
+    <!--step1：开启注解扫描，只扫描Controller注解-->
+    <context:component-scan base-package="com.ljf.spring.jp.sm.demo">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+    </context:component-scan>
+
+    <!--step2：配置的视图解析器对象-->
+    <bean id="internalResourceViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/pages/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+    <!--step3：过滤静态资源-->
+    <mvc:resources location="/css/" mapping="/css/**" />
+    <mvc:resources location="/images/" mapping="/images/**"/>
+    <mvc:resources location="/js/" mapping="/js/**" />
+
+    <!--step4：开启SpringMVC注解的支持-->
+    <mvc:annotation-driven/>
+    <!-- Controller方法调用规则定义
+  配置MultiActionController使用的方法对应策略ParameterMehtodNameResolver，
+  用于解析请求中的特定参数的值，将该值作为方法名调用 -->
+    <bean id="paramMethodResolver" class="org.springframework.web.servlet.mvc.multiaction.ParameterMethodNameResolver">
+        <property name="paramName"><value>action</value></property>
+    </bean>
+    <!-- step6.配置controller层-->
+    <bean name="/account" class="com.ljf.spring.jp.sm.demo.controller.AccountController">
+        <property name="actService" ref="acService"></property>
+        <property name="methodNameResolver" ref="paramMethodResolver"></property>
+    </bean>
+    <!-- servlet映射列表,所有控制层Controller的servlet在这里定义 -->
+
+    <bean name="/test1/multi" class="com.ljf.spring.jp.sm.demo.controller.MultiController">
+        <property name="methodNameResolver">
+            <ref bean="paramMethodResolver"/>
+        </property>
+    </bean>
+    <bean name="/test1/helloworld" class="com.ljf.spring.jp.sm.demo.controller.HelloWorldController" />
+
+</beans>

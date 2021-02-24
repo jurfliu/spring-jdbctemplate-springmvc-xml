@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx.xsd">
+    <!--step1：开启注解的扫描，希望处理service和dao，但是controller不需要Spring框架去处理-->
+    <context:component-scan base-package="com.ljf.spring.jp.sm.demo" >
+        <!--排除controller的扫描，配置哪些注解不扫描-->
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+    </context:component-scan>
+    <!--step2:加载jdbc连接信息 -->
+    <context:property-placeholder location="classpath:spring-jdbc.properties"></context:property-placeholder>
+    <!--step3：配置连接池-->
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${jdbc.driver}"></property>
+        <property name="url" value="${jdbc.url}"></property>
+        <property name="username" value="${jdbc.username}"></property>
+        <property name="password" value="${jdbc.password}"></property>
+    </bean>
+    <!-- step4.配置账户的持久层-->
+    <bean id="accountDao" class="com.ljf.spring.jp.sm.demo.dao.impl.AccountDaoImpl">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <!-- step5.配置业务层-->
+    <bean id="acService" class="com.ljf.spring.jp.sm.demo.service.impl.AccountServiceImpl">
+        <property name="actDao" ref="accountDao"></property>
+    </bean>
+
+    <!--step6：配置Spring框架声明式事务管理-->
+    <!--配置事务管理器-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <!--配置事务通知-->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="find*" read-only="true"/>
+            <tx:method name="*" isolation="DEFAULT"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!--配置AOP 织入增强-->
+    <aop:config>
+        <aop:advisor advice-ref="txAdvice" pointcut="execution(* com.ljf.spring.jp.sm.demo.service.impl.*ServiceImpl.*(..))"/>
+    </aop:config>
+</beans>
